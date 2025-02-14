@@ -1,7 +1,6 @@
 import os
 import streamlit as st
-from galileo import (log, openai) # The Galileo OpenAI client wrapper is all you need!
-
+from galileo import (log, openai)
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -10,10 +9,18 @@ client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 @log(span_type="retriever")
 def retrieve_documents(query: str):
+    # TODO: Replace with actual RAG retrieval
     documents = [
         {
             "id": "1",
             "text": "This is a test document",
+            "metadata": {
+                "source": "test"
+            }
+        },
+        {
+            "id": "2",
+            "text": "This is another test document",
             "metadata": {
                 "source": "test"
             }
