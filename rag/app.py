@@ -1,16 +1,14 @@
 import os
 import streamlit as st
 from dotenv import load_dotenv
-import openai
+from galileo import openai, log
 
 load_dotenv()
 
 # Initialize OpenAI client directly
 client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
-# Set logging_enabled to False since we're not using Galileo
-logging_enabled = False
-
+@log(span_type="retriever")
 def retrieve_documents(query: str):
     # TODO: Replace with actual RAG retrieval
     documents = [

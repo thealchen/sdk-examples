@@ -1,4 +1,4 @@
-galileo==0.0.3
+galileo==0.0.4
 streamlit>=1.29.0
 openai==1.61.1
 pydantic==2.10.6
