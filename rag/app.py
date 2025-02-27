@@ -1,9 +1,19 @@
 import os
-import streamlit as st
 from dotenv import load_dotenv
 from galileo import openai, log
+from rich.console import Console
+from rich.panel import Panel
+from rich.markdown import Markdown
+import questionary
+import sys
 
 load_dotenv()
+
+# Initialize console for rich output
+console = Console()
+
+# Check if Galileo logging is enabled
+logging_enabled = os.environ.get("GALILEO_API_KEY") is not None
 
 # Initialize OpenAI client directly
 client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
@@ -73,6 +83,7 @@ def rag(query: str):
     """
 
     try:
+        console.print("[bold blue]Generating answer...[/bold blue]")
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
@@ -85,54 +96,56 @@ def rag(query: str):
         return f"Error generating response: {str(e)}"
 
 def main():
-    st.title("RAG Demo")
+    console.print(Panel.fit(
+        "[bold]RAG Demo[/bold]\nThis demo uses a simulated RAG system to answer your questions.",
+        title="Galileo RAG Terminal Demo",
+        border_style="blue"
+    ))
     
-    # Add debug mode toggle
-    debug_mode = st.sidebar.checkbox("Debug Mode", value=False)
+    # Check environment setup
+    if logging_enabled:
+        console.print("[green]✅ Galileo logging is enabled[/green]")
+    else:
+        console.print("[yellow]⚠️ Galileo logging is disabled[/yellow]")
     
-    if debug_mode:
-        st.sidebar.subheader("Debug Information")
-        if logging_enabled:
-            st.sidebar.success("✅ Galileo logging is enabled")
-        else:
-            st.sidebar.warning("⚠️ Galileo logging is disabled")
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if api_key:
+        console.print("[green]✅ OpenAI API Key is set[/green]")
+    else:
+        console.print("[red]❌ OpenAI API Key is missing[/red]")
+        sys.exit(1)
+    
+    # Main interaction loop
+    while True:
+        # Get user query
+        query = questionary.text(
+            "Enter your question about Galileo, RAG, or AI techniques:",
+            validate=lambda text: len(text) > 0
+        ).ask()
         
-        api_key = os.environ.get("OPENAI_API_KEY")
-        if api_key:
-            st.sidebar.success("✅ OpenAI API Key is set")
-        else:
-            st.sidebar.error("❌ OpenAI API Key is missing")
-    
-    st.markdown("### Ask a question about Galileo, RAG, or AI techniques")
-    st.markdown("This demo uses a simulated RAG system to answer your questions.")
-    
-    # Make the text input more prominent
-    query = st.text_input("Enter your question here:", key="query_input", placeholder="e.g., What is Galileo?")
-    
-    # Add a submit button for clarity
-    submit_button = st.button("Submit Question")
-    
-    # Process query when button is clicked or Enter is pressed in the text input
-    if submit_button or query:
-        if query:  # Only process if there's actual text
-            with st.spinner("Generating answer..."):
-                try:
-                    result = rag(query)
-                    
-                    # Show debug info if debug mode is enabled
-                    if debug_mode:
-                        st.subheader("Retrieved Documents:")
-                        documents = retrieve_documents(query)
-                        for i, doc in enumerate(documents):
-                            with st.expander(f"Document {i+1} (Source: {doc['metadata']['source']})"):
-                                st.write(doc['text'])
-                    
-                    st.subheader("Answer:")
-                    st.write(result)
-                except Exception as e:
-                    st.error(f"Error: {str(e)}")
-        else:
-            st.warning("Please enter a question first.")
+        if query.lower() in ['exit', 'quit', 'q']:
+            break
+            
+        try:
+            result = rag(query)
+            
+            console.print("\n[bold green]Answer:[/bold green]")
+            console.print(Panel(Markdown(result), border_style="green"))
+            
+            # Ask if user wants to continue
+            continue_session = questionary.confirm(
+                "Do you want to ask another question?",
+                default=True
+            ).ask()
+            
+            if not continue_session:
+                break
+                
+        except Exception as e:
+            console.print(f"[bold red]Error:[/bold red] {str(e)}")
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        console.print("\n[bold]Exiting RAG Demo. Goodbye![/bold]")
