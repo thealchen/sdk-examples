@@ -1,4 +1,4 @@
-galileo-0.0.1-py3-none-any.whl
+galileo>=0.0.3
 streamlit>=1.29.0
 openai==1.61.1
 pydantic==2.10.6
