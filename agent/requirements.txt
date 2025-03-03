@@ -1,5 +1,6 @@
-galileo==0.0.4
-streamlit>=1.29.0
+galileo==0.0.7
+rich>=13.7.0
+questionary>=2.0.1
 openai==1.61.1
 pydantic==2.10.6
 aiohappyeyeballs==2.4.6
@@ -16,3 +17,4 @@ six==1.17.0
 typing_extensions==4.12.2
 urllib3==2.3.0
 yarl==1.18.3
+python-dotenv>=1.0.0

@@ -1,0 +1,40 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "convert_text_to_number",
+      "description": "Convert numbers written as words to their numerical values.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Text containing numbers written as words (e.g., 'twenty-five', 'one hundred and two')"
+          }
+        },
+        "required": ["text"],
+        "additionalProperties": false
+      },
+      "strict": true
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "calculate",
+      "description": "Perform arithmetic calculations on numbers.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "Arithmetic expression to calculate (e.g., '5 + 3', '10 * 4', '100 / 25')"
+          }
+        },
+        "required": ["expression"],
+        "additionalProperties": false
+      },
+      "strict": true
+    }
+  }
+] 
