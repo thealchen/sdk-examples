@@ -1,8 +1,9 @@
 import os
 from galileo import log, galileo_context, openai  # Import Galileo components
 import json
+import time
 from pydantic import BaseModel, Field
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any
 from dotenv import load_dotenv
 from rich.console import Console
 import questionary
@@ -28,6 +29,9 @@ def load_tools():
 # Tool: Convert text numbers to numerical values using LLM with structured output
 @log(span_type="tool")  # Galileo integration: Log this function as a tool
 def convert_text_to_number(text):
+    """Convert a text number (like 'seven') to its numerical value (7)."""
+    console.print(f"[yellow]Converting:[/yellow] {text}")
+    
     prompt = f"""
 Convert the text number "{text}" to a numerical value.
 Return the result as a JSON object with a 'number' field containing only the integer value.
@@ -38,7 +42,7 @@ For example, for "twenty-five", return: {{"number": 25}}
         messages=[{"role": "user", "content": prompt}],
         response_format={"type": "json_object"}
     )
-    
+        
     # Parse the JSON response
     try:
         json_response = json.loads(response.choices[0].message.content.strip())
@@ -46,6 +50,8 @@ For example, for "twenty-five", return: {{"number": 25}}
         validated = NumberConversion(**json_response)
         # Store the number as an integer for internal use
         number = validated.number
+        
+        console.print(f"[green]Converted to:[/green] {number}")
         # Return a string representation for Galileo logging
         return str(number)
     except Exception as e:
@@ -59,28 +65,31 @@ For example, for "twenty-five", return: {{"number": 25}}
                     return str(int(word))
         except:
             pass
-        return raw_text
+        return f"Error: {str(e)}"
 
 # Tool: Calculator for arithmetic operations
 @log(span_type="tool")  # Galileo integration: Log this function as a tool
 def calculate(expression):
+    """Perform a calculation based on the given expression."""
+    console.print(f"[yellow]Calculating:[/yellow] {expression}")
+    
     try:
         result = eval(expression)
+        console.print(f"[green]Result:[/green] {result}")
         return f"The result of {expression} is {result}"
     except Exception as e:
+        console.print(f"[bold red]Error calculating:[/bold red] {str(e)}")
         return f"Error calculating {expression}: {str(e)}"
 
-def process_query(query):
+@log(span_type="llm")  # Galileo integration: Log this function as an LLM call
+def get_tool_calls(query):
+    """Ask the LLM to determine what tools to call for the given query."""
+    console.print("[blue]Asking LLM to determine tools to call...[/blue]")
+    
     # Load tools
     tools = load_tools()
     
-    console.print("[bold blue]Processing query...[/bold blue]")
-    console.print(f"Query: {query}")
-    
-    # Debug: Print the tools being used
-    console.print(f"[dim]Loaded {len(tools)} tools[/dim]")
-    
-    # Ask LLM to process the query with a clear plan
+    # Prepare messages for the LLM
     messages = [{
         "role": "system",
         "content": """You are an agent that processes numerical queries using these tools:
@@ -112,22 +121,37 @@ Never stop after just converting numbers - you must calculate the result!"""
         "content": f"Process this query: '{query}'"
     }]
     
+    # Make the LLM call
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=messages,
         tools=tools,
     )
     
-    # Process function calls
-    results = []
-    converted_values = {}
-    has_arithmetic = any(op in query.lower() for op in ['+', '-', '*', '/', 'plus', 'minus', 'times', 'divide'])
-    calculation_done = False
+    return response, tools
+
+@log  # Default workflow span to contain the entire process
+def process_query(query):
+    """Process a numerical query using LLM and tools."""
+    console.print("[bold blue]Processing query...[/bold blue]")
+    console.print(f"Query: {query}")
     
-    # Process all tool calls in sequence
-    tool_calls = response.choices[0].message.tool_calls
-    if tool_calls:
-        # Add the assistant's response to the message history
+    try:
+        # Get tool calls from LLM
+        response, tools = get_tool_calls(query)
+        
+        # Check if we have tool calls
+        tool_calls = response.choices[0].message.tool_calls
+        if not tool_calls:
+            console.print("[bold yellow]No tool calls detected in the response[/bold yellow]")
+            return "I couldn't process your query. Please try again with a clearer request."
+        
+        # Initialize results and conversation history
+        results = []
+        messages = []
+        converted_values = {}
+        
+        # Add the assistant's response to the conversation history
         messages.append({
             "role": "assistant",
             "content": response.choices[0].message.content or "",
@@ -143,18 +167,20 @@ Never stop after just converting numbers - you must calculate the result!"""
             ]
         })
         
-        # Process each tool call and add tool messages to the history
+        # Process each tool call
         for call in tool_calls:
             if call.function.name == "convert_text_to_number":
                 text = json.loads(call.function.arguments)["text"]
-                console.print(f"[yellow]Converting:[/yellow] {text}")
+                
+                # Call the function - the @log decorator will create a tool span
                 number_str = convert_text_to_number(text)
+                
                 number = int(number_str) if number_str.isdigit() else None
                 if number is not None:
-                    console.print(f"[green]Converted to:[/green] {number}")
                     results.append(f"Converted '{text}' to {number}")
                     converted_values[text] = number
-                    # Add the tool response to message history
+                    
+                    # Add the tool response to conversation history
                     messages.append({
                         "role": "tool",
                         "tool_call_id": call.id,
@@ -163,28 +189,36 @@ Never stop after just converting numbers - you must calculate the result!"""
             
             elif call.function.name == "calculate":
                 expression = json.loads(call.function.arguments)["expression"]
-                console.print(f"[yellow]Calculating:[/yellow] {expression}")
+                
+                # Call the function - the @log decorator will create a tool span
                 result = calculate(expression)
-                console.print(f"[green]Result:[/green] {result}")
+                
                 results.append(result)
-                calculation_done = True
-                # Add the tool response to message history
+                
+                # Add the tool response to conversation history
                 messages.append({
                     "role": "tool",
                     "tool_call_id": call.id,
                     "content": result
                 })
         
-        # If we have arithmetic but no calculation was done, ask LLM to complete the sequence
-        if has_arithmetic and not calculation_done:
-            console.print("[yellow]Calculation step missing - requesting completion...[/yellow]")
+        # Check if we need to make a follow-up request for calculation
+        has_arithmetic = any(op in query.lower() for op in ['+', '-', '*', '/', 'plus', 'minus', 'times', 'divide'])
+        calculation_done = any("result of" in r for r in results)
+        
+        if has_arithmetic and not calculation_done and converted_values:
+            console.print("[yellow]Calculation step missing - making follow-up request...[/yellow]")
             
             # Add a message requesting completion of the sequence
+            follow_up_message = f"Now you must calculate the result using the converted numbers. The original query was: '{query}'"
+            console.print(f"[blue]Follow-up request:[/blue] {follow_up_message}")
+            
             messages.append({
                 "role": "user",
-                "content": f"Now you must calculate the result using the converted numbers. The original query was: '{query}'"
+                "content": follow_up_message
             })
             
+            # Make a follow-up request
             follow_up = client.chat.completions.create(
                 model="gpt-4o",
                 messages=messages,
@@ -192,8 +226,9 @@ Never stop after just converting numbers - you must calculate the result!"""
             )
             
             # Process any additional tool calls
-            if follow_up.choices[0].message.tool_calls:
-                # Add the assistant's response to the message history
+            follow_up_tool_calls = follow_up.choices[0].message.tool_calls
+            if follow_up_tool_calls:
+                # Add the assistant's response to the conversation history
                 messages.append({
                     "role": "assistant",
                     "content": follow_up.choices[0].message.content or "",
@@ -205,29 +240,60 @@ Never stop after just converting numbers - you must calculate the result!"""
                                 "name": call.function.name,
                                 "arguments": call.function.arguments
                             }
-                        } for call in follow_up.choices[0].message.tool_calls
+                        } for call in follow_up_tool_calls
                     ]
                 })
                 
-                for call in follow_up.choices[0].message.tool_calls:
+                # Process follow-up tool calls
+                for call in follow_up_tool_calls:
                     if call.function.name == "calculate":
                         expression = json.loads(call.function.arguments)["expression"]
-                        console.print(f"[yellow]Calculating:[/yellow] {expression}")
+                        
+                        # Call the function - the @log decorator will create a tool span
                         result = calculate(expression)
-                        console.print(f"[green]Result:[/green] {result}")
+                        
                         results.append(result)
-                        # Add the tool response to message history
+                        
+                        # Add the tool response to conversation history
                         messages.append({
                             "role": "tool",
                             "tool_call_id": call.id,
                             "content": result
                         })
-    else:
-        console.print("[bold yellow]No tool calls detected in the response[/bold yellow]")
-        return "I couldn't process your query. Please try again with a clearer request."
-    
-    console.print(f"[dim]Final results: {results}[/dim]")
-    return "\n".join(results) if results else "I couldn't process your query. Please try again with a clearer request."
+        
+        # Create a final summary
+        if results:
+            # Extract the calculation result if available
+            final_answer = results[-1]
+            if "result of" in final_answer and "is" in final_answer:
+                final_answer = final_answer.split("is")[-1].strip()
+            
+            # Create a summary of all operations
+            summary = f"I've processed your query '{query}'.\n\n"
+            
+            # Add information about text number conversions
+            if converted_values:
+                summary += "Text number conversions:\n"
+                for text, number in converted_values.items():
+                    summary += f"- '{text}' → {number}\n"
+                summary += "\n"
+            
+            # Add calculation result if available
+            if calculation_done or any("result of" in r for r in results):
+                summary += f"Final answer: {final_answer}"
+            else:
+                summary += "\n".join(results)
+        else:
+            summary = "I couldn't process your query. Please try again with a clearer request."
+        
+        console.print(f"[dim]Final results: {results}[/dim]")
+        return summary
+        
+    except Exception as e:
+        console.print(f"[bold red]Error in process_query:[/bold red] {str(e)}")
+        import traceback
+        console.print(traceback.format_exc())
+        return f"Error processing query: {str(e)}"
 
 def main():    
     # Add a console header
@@ -235,31 +301,30 @@ def main():
     console.print("Simple agent demonstrating Galileo integration")
     console.print("Type your query or 'exit' to quit\n")
     
-    while True:
-        query = questionary.text(
-            "Enter your query (or 'exit' to quit):",
-            default="What's 4 + seven?"
-        ).ask()
+    # Process a single query and exit
+    query = questionary.text(
+        "Enter your query:",
+        default="What's 4 + seven?"
+    ).ask()
+    
+    if query is None or query.lower() in ['exit', 'quit', 'q']:
+        console.print("\n[bold]Exiting. Goodbye![/bold]")
+        return
         
-        if query.lower() in ['exit', 'quit', 'q']:
-            break
+    try:
+        # Galileo integration: Create a context for tracking this entire request
+        # This wraps the entire process in a Galileo trace for observability
+        with galileo_context():
+            result = process_query(query)
+        
+        console.print("\n[bold green]Result:[/bold green]")
+        console.print(result)
+        console.print("\n[bold]Exiting. Goodbye![/bold]")
             
-        try:
-            # Galileo integration: Create a context for tracking this entire request
-            # This wraps the entire process in a Galileo trace for observability
-            with galileo_context():
-                result = process_query(query)
-            
-            console.print("\n[bold green]Result:[/bold green]")
-            console.print(result)
-            
-            if not questionary.confirm("Ask another question?", default=True).ask():
-                break
-                
-        except Exception as e:
-            console.print(f"[bold red]Error:[/bold red] {str(e)}")
-            import traceback
-            console.print(traceback.format_exc())
+    except Exception as e:
+        console.print(f"[bold red]Error:[/bold red] {str(e)}")
+        import traceback
+        console.print(traceback.format_exc())
 
 if __name__ == "__main__":
     try:

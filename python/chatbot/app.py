@@ -7,7 +7,7 @@ load_dotenv()
 
 client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"), organization=os.environ.get("OPENAI_ORGANIZATION"))
 
-prompt = f"i"
+prompt = f"Explain the following topic succinctly: Newton's First Law"
 response = client.chat.completions.create(
     model="gpt-4o",
     messages=[{"role": "system", "content": prompt}],

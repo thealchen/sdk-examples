@@ -1,0 +1,25 @@
+{
+  "name": "galileo-agent",
+  "version": "1.0.0",
+  "description": "TypeScript agent with Galileo logging",
+  "main": "dist/minimal_agent.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "ts-node minimal_agent.ts",
+    "dev": "ts-node-dev --respawn minimal_agent.ts"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "dotenv": "^16.3.1",
+    "galileo": "file:../galileo-1.4.0.tgz",
+    "inquirer": "^8.2.5",
+    "openai": "^4.20.0"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^8.2.5",
+    "@types/node": "^20.10.0",
+    "ts-node": "^10.9.1",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.2"
+  }
+} 

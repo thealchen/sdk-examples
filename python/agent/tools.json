@@ -2,14 +2,14 @@
   {
     "type": "function",
     "function": {
-      "name": "convert_text_to_number",
+      "name": "convert_text_to_arithmetic_expression",
       "description": "Convert numbers written as words to their numerical values.",
       "parameters": {
         "type": "object",
         "properties": {
           "text": {
             "type": "string",
-            "description": "Text containing numbers written as words (e.g., 'twenty-five', 'one hundred and two')"
+            "description": "A text expression which can contain numbers written as words (e.g., 'twenty-five', 'one hundred and two'), numbers written as digits (e.g., '5', '100'), and arithmetic operators (e.g., '+', '-', '*', '/')"
           }
         },
         "required": ["text"],
