@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from galileo import openai, log
+from galileo import openai, log, GalileoLogger
 from rich.console import Console
 from rich.panel import Panel
 from rich.markdown import Markdown
@@ -14,6 +14,11 @@ console = Console()
 
 # Check if Galileo logging is enabled
 logging_enabled = os.environ.get("GALILEO_API_KEY") is not None
+
+logger = GalileoLogger(
+    project="rag-test",
+    log_stream="dev",
+)
 
 # Initialize OpenAI client directly
 client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
