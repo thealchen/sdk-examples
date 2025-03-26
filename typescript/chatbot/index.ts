@@ -1,22 +1,43 @@
-const dotenv = require("dotenv");
-const { wrapOpenAI, flush, init } = require("galileo");
-const { OpenAI } = require("openai");
+import { GalileoLogger } from "galileo-experimental";
 
-dotenv.config(); // Load environment variables
+const logger = new GalileoLogger();
 
-const openai = wrapOpenAI(new OpenAI({ apiKey: process.env.OPENAI_API_KEY }));
+// Start a trace for a RAG application
+const trace = logger.startTrace({
+  input: "What were the major causes of World War I?",
+  metadata: {
+    user_id: "123",
+    session_id: "456",
+    timestamp: new Date().toISOString(),
+  },
+});
 
-async function run() {
-  init();
+// Start a workflow span for the retrieval process
+const retrievalWorkflow = trace.startWorkflowSpan("Document Retrieval");
 
-  const result = await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages: [{ content: "Say hello world!", role: "user" }],
-  });
+// Add a retriever span for the query
+retrievalWorkflow.logRetrieverSpan(
+  "What were the major causes of World War I?",
+  [
+    { content: "The assassination of Archduke Franz Ferdinand...", metadata: { source: "history.txt" } },
+    { content: "Militarism, alliances, imperialism, and nationalism...", metadata: { source: "causes.txt" } }
+  ]
+);
 
-  console.log(result.choices[0].message.content); // Access the response
+// End the retrieval workflow
+retrievalWorkflow.end("Retrieved 2 documents");
 
-  flush();
-}
+// Add an LLM span for generating the response
+trace.logSpan(
+  "Based on these documents, what were the major causes of World War I? Documents: [...]",
+  "The major causes of World War I included the assassination of Archduke Franz Ferdinand, militarism, alliances, imperialism, and nationalism...",
+  "gpt-4o",
+  0.3,
+  "llm"
+);
 
-run().catch(console.error);
+// Conclude the trace
+trace.conclude("The major causes of World War I included...");
+
+// Flush the trace to Galileo
+trace.flush();
