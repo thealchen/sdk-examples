@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from galileo import openai, log, GalileoLogger
+from galileo import openai, log, GalileoLogger, galileo_context
 from rich.console import Console
 from rich.panel import Panel
 from rich.markdown import Markdown
@@ -17,10 +17,11 @@ logging_enabled = os.environ.get("GALILEO_API_KEY") is not None
 
 print(os.environ.get("GALILEO_API_KEY"))
 
-logger = GalileoLogger(
-    project="chunk-utilization",    
+galileo_context.init(
+    project="chunk-utilization",
     log_stream="dev",
 )
+
 # Initialize OpenAI client
 client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
@@ -97,11 +98,28 @@ def retrieve_verbose_documents(query: str):
     ]
     
     # Find the most relevant predefined query
+    docs = None
     for key in verbose_contexts:
         if key in query.lower():
-            return verbose_contexts[key]
+            docs = verbose_contexts[key]
+            break
     
-    return default_docs
+    if docs is None:
+        docs = default_docs
+        
+    # Transform documents into Galileo's expected format
+    galileo_docs = []
+    for doc in docs:
+        galileo_docs.append({
+            "content": doc["text"],
+            "metadata": {
+                "id": doc["id"],
+                "source": doc["metadata"]["source"],
+                "category": doc["metadata"]["category"]
+            }
+        })
+    
+    return galileo_docs
 
 @log
 def rag_with_poor_utilization(query: str):
@@ -114,7 +132,7 @@ def rag_with_poor_utilization(query: str):
     # Format documents for the prompt
     formatted_docs = ""
     for i, doc in enumerate(documents):
-        formatted_docs += f"Document {i+1} (Source: {doc['metadata']['source']}):\n{doc['text']}\n\n"
+        formatted_docs += f"Document {i+1} (Source: {doc['metadata']['source']}):\n{doc['content']}\n\n"
 
     # Basic prompt that doesn't guide the model on handling verbose chunks
     basic_prompt = f"""
@@ -150,7 +168,7 @@ def rag_with_better_utilization(query: str):
     # Format documents for the prompt
     formatted_docs = ""
     for i, doc in enumerate(documents):
-        formatted_docs += f"Document {i+1} (Source: {doc['metadata']['source']}):\n{doc['text']}\n\n"
+        formatted_docs += f"Document {i+1} (Source: {doc['metadata']['source']}):\n{doc['content']}\n\n"
 
     # Enhanced prompt that guides the model to better utilize the chunks
     enhanced_prompt = f"""
@@ -242,8 +260,8 @@ def main():
             console.print("\n[bold cyan]Retrieved Context (Verbose Chunks):[/bold cyan]")
             for i, doc in enumerate(documents):
                 console.print(Panel(
-                    f"[bold]Source:[/bold] {doc['metadata']['source']}\n\n[dim]{doc['text']}[/dim]",
-                    title=f"Document {i+1} ({len(doc['text'])} characters)",
+                    f"[bold]Source:[/bold] {doc['metadata']['source']}\n\n[dim]{doc['content']}[/dim]",
+                    title=f"Document {i+1} ({len(doc['content'])} characters)",
                     border_style="cyan"
                 ))
             
