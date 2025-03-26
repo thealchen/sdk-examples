@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from galileo import openai, log, GalileoLogger
+from galileo import openai, log, galileo_context
 from rich.console import Console
 from rich.panel import Panel
 from rich.markdown import Markdown
@@ -15,10 +15,8 @@ console = Console()
 # Check if Galileo logging is enabled
 logging_enabled = os.environ.get("GALILEO_API_KEY") is not None
 
-logger = GalileoLogger(
-    project="out-of-context",    
-    log_stream="dev",
-)
+galileo_context(project="out-of-context", log_stream="dev").init()
+
 # Initialize OpenAI client
 client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
@@ -32,51 +30,56 @@ def retrieve_documents(query: str):
     incomplete_contexts = {
         "eiffel tower": [
             {
-                "id": "doc1",
-                "text": "The Eiffel Tower is an iron lattice tower located in Paris, France. It was designed by Gustave Eiffel.",
+                "content": "The Eiffel Tower is an iron lattice tower located in Paris, France. It was designed by Gustave Eiffel.",
                 "metadata": {
+                    "id": "doc1",
                     "source": "travel_guide",
-                    "category": "landmarks"
+                    "category": "landmarks",
+                    "relevance": "high"
                 }
             }
         ],
         "python language": [
             {
-                "id": "doc1",
-                "text": "Python is a high-level programming language known for its readability and simple syntax.",
+                "content": "Python is a high-level programming language known for its readability and simple syntax.",
                 "metadata": {
+                    "id": "doc1",
                     "source": "programming_guide",
-                    "category": "languages"
+                    "category": "languages",
+                    "relevance": "high"
                 }
             }
         ],
         "climate change": [
             {
-                "id": "doc1",
-                "text": "Climate change refers to long-term shifts in temperatures and weather patterns. Human activities have been the main driver of climate change since the 1800s.",
+                "content": "Climate change refers to long-term shifts in temperatures and weather patterns. Human activities have been the main driver of climate change since the 1800s.",
                 "metadata": {
+                    "id": "doc1",
                     "source": "environmental_science",
-                    "category": "global_issues"
+                    "category": "global_issues",
+                    "relevance": "high"
                 }
             }
         ],
         "artificial intelligence": [
             {
-                "id": "doc1",
-                "text": "Artificial intelligence involves creating systems capable of performing tasks that typically require human intelligence.",
+                "content": "Artificial intelligence involves creating systems capable of performing tasks that typically require human intelligence.",
                 "metadata": {
+                    "id": "doc1",
                     "source": "technology_overview",
-                    "category": "ai"
+                    "category": "ai",
+                    "relevance": "high"
                 }
             }
         ],
         "quantum computing": [
             {
-                "id": "doc1",
-                "text": "Quantum computing uses quantum bits or qubits that can represent multiple states simultaneously.",
+                "content": "Quantum computing uses quantum bits or qubits that can represent multiple states simultaneously.",
                 "metadata": {
+                    "id": "doc1",
                     "source": "computing_technology",
-                    "category": "quantum"
+                    "category": "quantum",
+                    "relevance": "high"
                 }
             }
         ]
@@ -85,11 +88,12 @@ def retrieve_documents(query: str):
     # Default case for queries not in our predefined list
     default_docs = [
         {
-            "id": "default_doc",
-            "text": "This is a generic response with limited information about the query topic.",
+            "content": "This is a generic response with limited information about the query topic.",
             "metadata": {
+                "id": "default_doc",
                 "source": "general_knowledge",
-                "category": "miscellaneous"
+                "category": "miscellaneous",
+                "relevance": "low"
             }
         }
     ]
@@ -112,7 +116,7 @@ def rag_with_hallucination(query: str):
     # Format documents for better readability in the prompt
     formatted_docs = ""
     for i, doc in enumerate(documents):
-        formatted_docs += f"Document {i+1} (Source: {doc['metadata']['source']}):\n{doc['text']}\n\n"
+        formatted_docs += f"Document {i+1} (Source: {doc['metadata']['source']}):\n{doc['content']}\n\n"
 
     # This prompt doesn't strongly constrain the model to only use the provided context
     weak_prompt = f"""
@@ -148,7 +152,7 @@ def rag_with_constraint(query: str):
     # Format documents for better readability in the prompt
     formatted_docs = ""
     for i, doc in enumerate(documents):
-        formatted_docs += f"Document {i+1} (Source: {doc['metadata']['source']}):\n{doc['text']}\n\n"
+        formatted_docs += f"Document {i+1} (Source: {doc['metadata']['source']}):\n{doc['content']}\n\n"
 
     # This prompt strongly constrains the model to only use the provided context
     strong_prompt = f"""
@@ -238,7 +242,7 @@ def main():
             console.print("\n[bold cyan]Retrieved Context:[/bold cyan]")
             for i, doc in enumerate(documents):
                 console.print(Panel(
-                    f"[bold]Source:[/bold] {doc['metadata']['source']}\n\n{doc['text']}",
+                    f"[bold]Source:[/bold] {doc['metadata']['source']}\n\n{doc['content']}",
                     title=f"Document {i+1}",
                     border_style="cyan"
                 ))
@@ -276,5 +280,6 @@ def main():
 if __name__ == "__main__":
     try:
         main()
+        galileo_context.flush()
     except KeyboardInterrupt:
         console.print("\n[bold]Exiting Out-of-Context RAG Demo. Goodbye![/bold]")
