@@ -237,16 +237,6 @@ def main():
             hallucinated_result = rag_with_hallucination(query)
             constrained_result = rag_with_constraint(query)
             
-            # Display the retrieved context
-            documents = retrieve_documents(query)
-            console.print("\n[bold cyan]Retrieved Context:[/bold cyan]")
-            for i, doc in enumerate(documents):
-                console.print(Panel(
-                    f"[bold]Source:[/bold] {doc['metadata']['source']}\n\n{doc['content']}",
-                    title=f"Document {i+1}",
-                    border_style="cyan"
-                ))
-            
             # Display the hallucinated response
             console.print("\n[bold red]Unconstrained Response (Prone to Out-of-Context Information):[/bold red]")
             console.print(Panel(Markdown(hallucinated_result), border_style="red"))
