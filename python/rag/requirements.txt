@@ -19,3 +19,6 @@ six==1.17.0
 typing_extensions==4.12.2
 urllib3==2.3.0
 yarl==1.18.3
+faiss-cpu>=1.7.4
+sentence-transformers>=2.5.1
+numpy>=1.24.0  # Required by FAISS and sentence-transformers
