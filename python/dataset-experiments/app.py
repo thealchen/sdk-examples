@@ -1,7 +1,7 @@
 from galileo.prompts import get_prompt_template, create_prompt_template
 from galileo.experiments import run_experiment
 from galileo.datasets import get_dataset
-from galileo.resources.models import MessageRole, Message
+from galileo_core.schemas.logging.llm import Message, MessageRole
 from dotenv import load_dotenv
 
 load_dotenv()
