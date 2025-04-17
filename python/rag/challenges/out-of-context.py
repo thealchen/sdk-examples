@@ -1,21 +1,14 @@
 import os
 from dotenv import load_dotenv
 from galileo import openai, log, galileo_context
-from rich.console import Console
-from rich.panel import Panel
-from rich.markdown import Markdown
 import questionary
-import sys
 
 load_dotenv()
-
-# Initialize console for rich output
-console = Console()
 
 # Check if Galileo logging is enabled
 logging_enabled = os.environ.get("GALILEO_API_KEY") is not None
 
-galileo_context(project="out-of-context", log_stream="dev").init()
+galileo_context.init(project="out-of-context", log_stream="dev")
 
 # Initialize OpenAI client
 client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
@@ -105,7 +98,7 @@ def retrieve_documents(query: str):
     
     return default_docs
 
-@log
+@log(name="rag_with_hallucination")
 def rag_with_hallucination(query: str):
     """
     RAG implementation that demonstrates the out-of-context problem by using
@@ -129,7 +122,7 @@ def rag_with_hallucination(query: str):
     """
 
     try:
-        console.print("[bold blue]Generating answer (prone to out-of-context information)...[/bold blue]")
+        print("Generating answer (prone to out-of-context information)...")
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
@@ -141,7 +134,7 @@ def rag_with_hallucination(query: str):
     except Exception as e:
         return f"Error generating response: {str(e)}"
 
-@log
+@log(name="rag_with_constraint")
 def rag_with_constraint(query: str):
     """
     RAG implementation that demonstrates how to mitigate the out-of-context problem
@@ -169,7 +162,7 @@ def rag_with_constraint(query: str):
     """
 
     try:
-        console.print("[bold green]Generating answer (constrained to context)...[/bold green]")
+        print("Generating answer (constrained to context)...")
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
@@ -183,25 +176,19 @@ def rag_with_constraint(query: str):
 
 @log
 def main():
-
-    console.print(Panel.fit(
-        "[bold]Out-of-Context RAG Demo[/bold]\nThis demo shows how RAG systems can generate out-of-context information and how to prevent it.",
-        title="Galileo RAG Challenge: Out-of-Context Information",
-        border_style="red"
-    ))
+    print("Out-of-Context RAG Demo")
+    print("This demo shows how RAG systems can generate out-of-context information and how to prevent it.")
     
     # Check environment setup
     if logging_enabled:
-        console.print("[green]✅ Galileo logging is enabled[/green]")
+        print("Galileo logging is enabled")
     else:
-        console.print("[yellow]⚠️ Galileo logging is disabled[/yellow]")
+        print("Galileo logging is disabled")
     
     api_key = os.environ.get("OPENAI_API_KEY")
-    if api_key:
-        console.print("[green]✅ OpenAI API Key is set[/green]")
-    else:
-        console.print("[red]❌ OpenAI API Key is missing[/red]")
-        sys.exit(1)
+    if not api_key:
+        print("OpenAI API Key is missing")
+        return
     
     # Suggested queries
     suggested_queries = [
@@ -212,48 +199,37 @@ def main():
         "How many qubits are in the most powerful quantum computer?"
     ]
     
-    console.print("\n[bold yellow]Suggested queries (these will demonstrate the problem):[/bold yellow]")
+    print("\nSuggested queries (these will demonstrate the problem):")
     for i, q in enumerate(suggested_queries):
-        console.print(f"[yellow]{i+1}. {q}[/yellow]")
+        print(f"{i+1}. {q}")
     
     # Main interaction loop
     while True:
-        # Get user query
-        query = questionary.text(
-            "Enter your question (or type a number 1-5 to use a suggested query):",
-            validate=lambda text: len(text) > 0
-        ).ask()
-        
-        if query.lower() in ['exit', 'quit', 'q']:
-            break
-            
-        # Check if user entered a number for suggested queries
-        if query.isdigit() and 1 <= int(query) <= len(suggested_queries):
-            query = suggested_queries[int(query)-1]
-            console.print(f"[bold]Using query:[/bold] {query}")
-        
         try:
+            # Get user query
+            query = questionary.text(
+                "Enter your question (or type a number 1-5 to use a suggested query):",
+                validate=lambda text: len(text) > 0
+            ).ask()
+            
+            if query.lower() in ['exit', 'quit', 'q']:
+                break
+                
+            # Check if user entered a number for suggested queries
+            if query.isdigit() and 1 <= int(query) <= len(suggested_queries):
+                query = suggested_queries[int(query)-1]
+                print(f"Using query: {query}")
+            
             # Generate both types of responses
             hallucinated_result = rag_with_hallucination(query)
             constrained_result = rag_with_constraint(query)
             
-            # Display the hallucinated response
-            console.print("\n[bold red]Unconstrained Response (Prone to Out-of-Context Information):[/bold red]")
-            console.print(Panel(Markdown(hallucinated_result), border_style="red"))
+            # Display the responses
+            print("\nUnconstrained Response (Prone to Out-of-Context Information):")
+            print(hallucinated_result)
             
-            # Display the constrained response
-            console.print("\n[bold green]Constrained Response (Limited to Context):[/bold green]")
-            console.print(Panel(Markdown(constrained_result), border_style="green"))
-            
-            # Explain the difference
-            console.print("\n[bold yellow]Analysis:[/bold yellow]")
-            console.print(Panel(
-                "The unconstrained response may include information not present in the retrieved context, "
-                "demonstrating the out-of-context problem. The constrained response is limited to only "
-                "information explicitly provided in the context, reducing hallucinations but potentially "
-                "providing less complete answers.",
-                border_style="yellow"
-            ))
+            print("\nConstrained Response (Limited to Context):")
+            print(constrained_result)
             
             # Ask if user wants to continue
             continue_session = questionary.confirm(
@@ -265,11 +241,12 @@ def main():
                 break
                 
         except Exception as e:
-            console.print(f"[bold red]Error:[/bold red] {str(e)}")
+            print(f"Error: {str(e)}")
 
 if __name__ == "__main__":
     try:
         main()
-        galileo_context.flush()
     except KeyboardInterrupt:
-        console.print("\n[bold]Exiting Out-of-Context RAG Demo. Goodbye![/bold]")
+        print("\nExiting Out-of-Context RAG Demo. Goodbye!")
+    finally:
+        galileo_context.flush()  # Only flush at the very end

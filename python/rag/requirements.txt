@@ -1,4 +1,4 @@
-galileo>=0.2.3
+galileo>=0.3.0
 rich>=13.7.0
 questionary>=2.0.1
 openai==1.61.1
@@ -22,3 +22,5 @@ yarl==1.18.3
 faiss-cpu>=1.7.4
 sentence-transformers>=2.5.1
 numpy>=1.24.0  # Required by FAISS and sentence-transformers
+python-dotenv>=1.0.0  # Added for dotenv support
+datasets>=2.18.0  # Added for loading example datasets
