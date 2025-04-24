@@ -1,8 +1,9 @@
 # 📖 Galileo.ai SDK Examples
 [![GitHub stars](https://img.shields.io/github/stars/Naereen/StrapDown.js.svg?style=social&label=Star&maxAge=2592000)](https://GitHub.com/Naereen/StrapDown.js/stargazers/) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) 
+
 This repository contains example implementations and reference code for using the Galileo.ai SDK across both python and typescript applications. Galileo.ai is an evaluation platform for AI applications that helps you monitor, debug, and improve your LLM-powered applications.
 
-➡️ Sign up for a free account on [Galileo.ai](https://app.galileo.ai/sign-up).
+**➡️ Sign up for a free account on [Galileo.ai](https://app.galileo.ai/sign-up).**
 
 ## 📖 Read the Docs
 - [Galileo.ai Documentation](https://v2docs.galileo.ai/what-is-galileo)
