@@ -21,8 +21,7 @@ The examples cover several common LLM application patterns:
 - **Datasets & Experiments**: Managing test data and running controlled experiments
 
 ## 🚢 Getting Started
-
-Each directory contains standalone examples with their own setup instructions and dependencies. Generally, you'll need to:
+Each directory contains standalone examples with their own setup instructions and dependencies.
 
 1. Create a free account on [Galileo.ai](https://app.galileo.ai/sign-up) and obtain an API key
 2. Install the Galileo SDK for your language of choice

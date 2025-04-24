@@ -1,4 +1,6 @@
+venv
 .venv
 .env
-scarp/
+scrap/
 *node_modules/
+.cursorrules
