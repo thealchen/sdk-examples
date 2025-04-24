@@ -18,6 +18,7 @@ The examples cover several common LLM application patterns:
 - **Chatbots**: Simple conversational applications
 - **RAG**: Retrieval-Augmented Generation applications that combine knowledge bases with LLMs
 - **Agents**: Systems where LLMs use tools and make decisions
+  - *Weather Vibes Agent*: A multi-function agent that provides weather info, recommendations, and matching YouTube videos
 - **Datasets & Experiments**: Managing test data and running controlled experiments
 
 ## 🚢 Getting Started
