@@ -32,4 +32,4 @@ jobs:
       - name: Run Pylint
         continue-on-error: true
         run: |
-          pylint --rcfile=.pylintrc python/
+          pylint --rcfile=.pylintrc python/**/*.py
