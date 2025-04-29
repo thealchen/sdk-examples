@@ -15,7 +15,6 @@ from agent_framework.state import AgentState
 from agent_framework.models import ToolMetadata
 from openai import OpenAI
 
-
 # Configure proper path for imports
 current_dir = Path(__file__).resolve().parent
 project_root = current_dir.parent

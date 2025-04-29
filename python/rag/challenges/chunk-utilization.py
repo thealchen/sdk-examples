@@ -48,7 +48,9 @@ class DocumentStore:
             [
                 {
                     "id": "solar_system_1",
-                    "text": "The Solar System is the gravitationally bound system of the Sun and the objects that orbit it. It formed 4.6 billion years ago from the gravitational collapse of a giant interstellar molecular cloud. The vast majority of the system's mass is in the Sun, with most of the remaining mass contained in the planet Jupiter.",
+                    "text": (
+                        "The Solar System is the gravitationally bound system of the Sun and the objects that orbit it. It formed 4.6 billion years ago from the gravitational collapse of a giant interstellar molecular cloud. The vast majority of the system's mass is in the Sun, with most of the remaining mass contained in the planet Jupiter."
+                    ),
                     "metadata": {
                         "source": "astronomy_encyclopedia",
                         "category": "planetary systems",
@@ -57,7 +59,9 @@ class DocumentStore:
                 },
                 {
                     "id": "solar_system_2",
-                    "text": "The four inner system planets—Mercury, Venus, Earth and Mars—are terrestrial planets, being composed primarily of rock and metal. The four giant planets of the outer system are substantially larger and more massive than the terrestrials. The two largest, Jupiter and Saturn, are gas giants, being composed mainly of hydrogen and helium; the next two, Uranus and Neptune, are ice giants.",
+                    "text": (
+                        "The four inner system planets—Mercury, Venus, Earth and Mars—are terrestrial planets, being composed primarily of rock and metal. The four giant planets of the outer system are substantially larger and more massive than the terrestrials. The two largest, Jupiter and Saturn, are gas giants, being composed mainly of hydrogen and helium; the next two, Uranus and Neptune, are ice giants."
+                    ),
                     "metadata": {
                         "source": "astronomy_textbook",
                         "category": "planetary systems",
@@ -66,7 +70,9 @@ class DocumentStore:
                 },
                 {
                     "id": "solar_system_3",
-                    "text": "The history of Solar System observation dates back to ancient times when astronomers first noticed that certain lights moved across the sky in a different way than the fixed stars. Ancient Greeks called these lights 'planetai' or wanderers, giving rise to our modern term 'planet'.",
+                    "text": (
+                        "The history of Solar System observation dates back to ancient times when astronomers first noticed that certain lights moved across the sky in a different way than the fixed stars. Ancient Greeks called these lights 'planetai' or wanderers, giving rise to our modern term 'planet'."
+                    ),
                     "metadata": {
                         "source": "astronomy_history",
                         "category": "astronomy history",
@@ -81,7 +87,9 @@ class DocumentStore:
             [
                 {
                     "id": "photosynthesis_1",
-                    "text": "Photosynthesis is the process by which plants, algae, and certain bacteria convert light energy, typically from the Sun, into chemical energy in the form of glucose or other sugars. These organisms are called photoautotrophs since they can create their own food.",
+                    "text": (
+                        "Photosynthesis is the process by which plants, algae, and certain bacteria convert light energy, typically from the Sun, into chemical energy in the form of glucose or other sugars. These organisms are called photoautotrophs since they can create their own food."
+                    ),
                     "metadata": {
                         "source": "biology_textbook",
                         "category": "cellular processes",
@@ -90,7 +98,9 @@ class DocumentStore:
                 },
                 {
                     "id": "photosynthesis_2",
-                    "text": "The light-dependent reactions of photosynthesis occur in the thylakoid membranes of chloroplasts. Here, light energy is captured by chlorophyll pigments and converted into chemical energy in the form of ATP and NADPH.",
+                    "text": (
+                        "The light-dependent reactions of photosynthesis occur in the thylakoid membranes of chloroplasts. Here, light energy is captured by chlorophyll pigments and converted into chemical energy in the form of ATP and NADPH."
+                    ),
                     "metadata": {
                         "source": "biochemistry_journal",
                         "category": "cellular processes",
@@ -99,7 +109,9 @@ class DocumentStore:
                 },
                 {
                     "id": "photosynthesis_3",
-                    "text": "The evolution of photosynthesis occurred early in Earth's history, with the earliest photosynthetic organisms appearing between 3.4 and 2.9 billion years ago. This development dramatically changed Earth's atmosphere by introducing oxygen.",
+                    "text": (
+                        "The evolution of photosynthesis occurred early in Earth's history, with the earliest photosynthetic organisms appearing between 3.4 and 2.9 billion years ago. This development dramatically changed Earth's atmosphere by introducing oxygen."
+                    ),
                     "metadata": {
                         "source": "evolutionary_biology",
                         "category": "evolution",
@@ -282,7 +294,9 @@ def rag_with_better_utilization(query: str, mixed_relevance: bool = False):
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a helpful assistant that thoroughly extracts and utilizes all relevant information from provided documents. Your goal is to ensure no important details are missed while prioritizing information from highly relevant sources.",
+                    "content": (
+                        "You are a helpful assistant that thoroughly extracts and utilizes all relevant information from provided documents. Your goal is to ensure no important details are missed while prioritizing information from highly relevant sources."
+                    ),
                 },
                 {"role": "user", "content": enhanced_prompt},
             ],

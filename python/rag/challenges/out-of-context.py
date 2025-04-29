@@ -46,7 +46,9 @@ def retrieve_documents(query: str):
         ],
         "climate change": [
             {
-                "content": "Climate change refers to long-term shifts in temperatures and weather patterns. Human activities have been the main driver of climate change since the 1800s.",
+                "content": (
+                    "Climate change refers to long-term shifts in temperatures and weather patterns. Human activities have been the main driver of climate change since the 1800s."
+                ),
                 "metadata": {
                     "id": "doc1",
                     "source": "environmental_science",
