@@ -24,5 +24,8 @@ dev = [
   "pytest-dotenv>=0.5.2"
 ]
 
+[tool.pytest.ini_options]
+env_files = [".env"]
+
 [tool.ruff]
 line-length = 120
